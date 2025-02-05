@@ -92,6 +92,9 @@ app.post('/payment/createOrder', async (req, res) => {
     }
 });
 
+app.get("/", (req, res) => {
+    res.send("Welcome to the Safarsathi Backend!");
+});
 
 
 dbConnection(); // Call DB connection
