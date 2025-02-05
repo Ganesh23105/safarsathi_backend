@@ -6,6 +6,8 @@ import jwt from "jsonwebtoken"; // Importing jwt to decode the token
 import { LocationRequest } from "../models/locationRequestSchema.js";
 import postmark from "postmark";
 import { User } from "../models/userSchema.js";
+import { transporter } from "../config/email.config.js";
+import { sendLocationRequestStatusEmail } from "./emailController.js";
 
 const ALLOWED_IMAGE_FORMATS = ["image/png", "image/jpeg", "image/webp"];
 
@@ -181,7 +183,7 @@ export const getAllLocationRequests = catchAsyncErrors(async (req, res, next) =>
 });
 
 // Initialize Postmark client
-const client = new postmark.ServerClient("4feb1e25-f19b-4159-8e76-9688a374cdf9");
+// const client = new postmark.ServerClient("4feb1e25-f19b-4159-8e76-9688a374cdf9");
 
 export const updateLocationRequestStatus = catchAsyncErrors(async (req, res, next) => {
     const { status } = req.body;
@@ -206,28 +208,17 @@ export const updateLocationRequestStatus = catchAsyncErrors(async (req, res, nex
         return next(new ErrorHandler("User not found", 404));
     }
 
-    const userEmail = user.email; // Assuming the User model has an email field
+    const userEmail = user.email; 
+    const userName = user.firstName;
 
-    console.log(userEmail)
-
-    // Send email notification using Postmark
-    // const email = "2022.ajinkya.patil@ves.ac.in"; // Replace with the user's email if it's dynamic
-
+    // Send email notification using Nodemailer
+    // Call the send email function
     try {
-        const emailResponse = await client.sendEmail({
-            "From": "2022.aryan.saraf@ves.ac.in", // Sender's email (must be verified on Postmark)
-            "To": userEmail,
-            "Subject": `Location Request Status Updated to ${status}`,
-            "TextBody": `Dear User, Your location request status has been updated to ${status}. Thank you!`,
-            "MessageStream": "outbound",
-            "TrackOpens": true  // Enable tracking to check delivery
-        });
-    
-        console.log(emailResponse);  // Log response from Postmark
-    
+        await sendLocationRequestStatusEmail(userEmail, userName, status);
+
         res.status(200).json({
             success: true,
-            message: `Location request status updated to ${status} and email sent to ${email}`,
+            message: `Location request status updated to ${status} and email sent to ${userEmail}`,
         });
     } catch (error) {
         return next(new ErrorHandler("Failed to send email", 500));

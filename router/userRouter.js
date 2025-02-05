@@ -3,6 +3,8 @@ import { login, customerRegister, customerLogout, getUserDetails, addEmployee, e
 import { isCustomerAuthenticated, isEmployeeAuthenticated, isEmployeeServiceProviderAuthenticated, isPackageManagerAuthenticated, isProviderVerifierAuthenticated, isServiceProviderAuthenticated } from "../middlewares/auth.js";
 import { createServiceProviderRequest, getServiceProviderRequests, getServiceProviders, registerServiceProvider, serviceProviderLogout, updateOrganizationImage} from "../controller/serviceProviderController.js"
 import { addLocationRequest } from "../controller/locationController.js";
+import { sendVerificationOtp } from "../controller/emailController.js";
+import { generateOtp } from "../middlewares/generateOtp.js";
 
 const router = express.Router();
 
@@ -12,7 +14,7 @@ router.post("/login", login)
 router.post("/customer/register", customerRegister)
 router.get("/customer/me", isCustomerAuthenticated, getUserDetails)
 router.get("/customer/logout", isCustomerAuthenticated, customerLogout)
-
+router.post("/customer/register/otp", generateOtp, sendVerificationOtp)
 
 router.post('/employee/add', isProviderVerifierAuthenticated, addEmployee);
 // router.get("/employee/providerverifier/logout", isProviderVerifierAuthenticated, provider_verifierLogout)

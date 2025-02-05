@@ -1,5 +1,5 @@
-import express from "express";
 import { config } from "dotenv";
+import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import fileUpload from "express-fileupload";
@@ -23,8 +23,8 @@ app.use(cors({
 }));
 
 // Log Razorpay key and secret to check if they are loaded correctly
-console.log("RAZORPAY_KEY_ID:", process.env.RAZORPAY_KEY_ID);
-console.log("RAZORPAY_KEY_SECRET:", process.env.RAZORPAY_KEY_SECRET);
+// console.log("RAZORPAY_KEY_ID:", process.env.RAZORPAY_KEY_ID);
+// console.log("RAZORPAY_KEY_SECRET:", process.env.RAZORPAY_KEY_SECRET);
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,        // From your .env file

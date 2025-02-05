@@ -7,30 +7,39 @@ import {
 } from "../models/userSchema.js";
 import {
     generateToken
-} from "../utils/jwtToken.js"
+} from "../utils/jwtToken.js";
+import otpStore from "../utils/otpStore.js";
+import { sendWelcomeEmail } from "./emailController.js";
 
 export const customerRegister = catchAsyncErrors(async (req, res, next) => {
-    const {
-        firstName,
-        lastName,
-        email,
-        password,
-        phone,
-        role,
-        address
-    } = req.body;
+    const { firstName, lastName, email, password, phone, role, address, otp } = req.body;
 
-    if (!firstName || !lastName || !email || !password || !phone || !role) {
-        return next(new ErrorHandler("Please fill full form.", 400))
+    // Validate input fields
+    if (!firstName || !lastName || !email || !password || !phone || !role || !otp) {
+        return next(new ErrorHandler("Please fill the complete form.", 400));
     }
 
-    let tourist = await User.findOne({
-        email
-    });
+    // Verify OTP
+    const storedData = otpStore[email];
+    if (!storedData) {
+        return next(new ErrorHandler("OTP not found or already used.", 400));
+    }
+
+    if (storedData.otp !== otp) {
+        return next(new ErrorHandler("Invalid OTP.", 400));
+    }
+
+    if (Date.now() > storedData.expiresAt) {
+        return next(new ErrorHandler("OTP has expired.", 400));
+    }
+
+    // Check if user already exists
+    let tourist = await User.findOne({ email });
     if (tourist) {
-        return next(new ErrorHandler("User Already Register.", 400))
+        return next(new ErrorHandler("User already registered.", 400));
     }
 
+    // Create new user
     tourist = await User.create({
         firstName,
         lastName,
@@ -38,11 +47,17 @@ export const customerRegister = catchAsyncErrors(async (req, res, next) => {
         password,
         phone,
         role,
-        address
+        address,
     });
 
-    generateToken(tourist, "User Registered Successfully.", 200, res);
-})
+    // Clear OTP after successful registration
+    delete otpStore[email];
+
+    sendWelcomeEmail(email, firstName);
+
+    // Generate and send token
+    generateToken(tourist, "User registered successfully.", 200, res);
+});
 
 export const login = catchAsyncErrors(async (req, res, next) => {
     const {
